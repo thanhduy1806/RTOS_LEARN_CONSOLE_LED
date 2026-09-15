@@ -1,0 +1,25 @@
+# STM32CubeIDE / GCC build output
+Debug/
+Release/
+build/
+out/
+
+# Compiler and linker artifacts (also ignore them if a different build
+# directory is used in the future)
+*.o
+*.d
+*.su
+*.cyclo
+*.elf
+*.hex
+*.bin
+*.map
+*.list
+
+# Temporary files created by editors and operating systems
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
