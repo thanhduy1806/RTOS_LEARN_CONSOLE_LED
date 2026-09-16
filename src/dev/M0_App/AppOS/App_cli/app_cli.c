@@ -3,6 +3,7 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
+#include <stdint.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -34,20 +35,39 @@ void app_cli_init(void){
     }
 }
 
+uint8_t check_number (char *command){
+  if ((*command<= '9') && (*command >= '0')){
+    return 1;
+  }
+  return 0;
+}
+
+uint32_t convert_to_decimal (char *command){
+  uint32_t decimal= 0;
+  uint32_t digit =0;
+  while (*(command+digit) != '\0'){
+    decimal = decimal * 10 + (uint32_t)(*(command + digit)-'0');
+    digit++;
+  }
+  return decimal;
+}
+
+
+
+
 void StartConsoleTask(void *argument)
 {
   uint8_t receivedByte;
   char commandLine[16];
   uint8_t commandLength = 0;
-  LedCommand_t command;
+  // LedCommand_t command;
+
+  const char welcome[]      = "\r\nCommands: on, off, blink\r\n> ";
   const char errorMessage[] = "\r\nUnknown command\r\n> ";
-  const char response[] = "\r\nOK\r\n> ";
-  const char blinktime[] = "\r\nEnter Time(ms)\r\n>";
+  const char response[]     = "\r\nOK\r\n> ";
+  const char blinktime[]    = "\r\nEnter Time(ms)\r\n>";
 
   (void)argument;
-
-  const char welcome[] =    
-      "\r\nCommands: on, off, blink\r\n> ";
 
   HAL_UART_Transmit(
       &huart1,
@@ -74,20 +94,23 @@ void StartConsoleTask(void *argument)
 
       commandLine[commandLength] = '\0';
 
-      if (strcmp(commandLine, "on") == 0)
+      if (strcmp(commandLine, "o") == 0)
       {
-        command = LED_COMMAND_ON;
+        cli_message.command = LED_COMMAND_ON;
       }
-      else if (strcmp(commandLine, "off") == 0)
+      else if (strcmp(commandLine, "f") == 0)
       {
-        command = LED_COMMAND_OFF;
+        cli_message.command = LED_COMMAND_OFF;
       }
       else if (strcmp(commandLine, "blink") == 0)
       {
-        command = LED_COMMAND_BLINK;
+        cli_message.command = LED_COMMAND_BLINK;
         HAL_UART_Transmit(&huart1, (uint8_t*)blinktime, sizeof(blinktime)-1, HAL_MAX_DELAY);
+        goto WaitEnterTime;
       }
-      else if (strcmp(commandLine, ))
+      else if (check_number(commandLine)){
+        cli_message.blinkTimeMS = convert_to_decimal(commandLine);
+      }
       else
       {
         HAL_UART_Transmit(
@@ -100,17 +123,17 @@ void StartConsoleTask(void *argument)
         continue;
       }
 
-      xQueueSend(ledCommandQueue, &command, 0);
-
       {
-
-
         HAL_UART_Transmit(
             &huart1,
             (uint8_t *)response,
             sizeof(response) - 1,
             HAL_MAX_DELAY);
       }
+
+      
+      xQueueSend(ledCommandQueue, &cli_message, 0);
+      WaitEnterTime:
 
       commandLength = 0;
     }
@@ -137,6 +160,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         uartRxQueue,
         &uartRxByte,
         &higherPriorityTaskWoken);
+
+    HAL_UART_Transmit(&huart1, &uartRxByte, 1, HAL_MAX_DELAY);
+    
 
     HAL_UART_Receive_IT(
         &huart1,
