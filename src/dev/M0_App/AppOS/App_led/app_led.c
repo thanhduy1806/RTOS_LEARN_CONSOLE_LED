@@ -48,9 +48,9 @@ static void Led_Set(uint8_t on)
 
 static void Led_Blink(uint32_t time_ms){
   HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-  // vTaskDelay(pdMS_TO_TICKS(time_ms));
+  vTaskDelay(pdMS_TO_TICKS(time_ms));
   // xQueueReceive(ledCommandQueue, &cli_message, pdMS_TO_TICKS(time_ms));
-  xQueueReceive(ledCommandQueue, &cli_message, pdMS_TO_TICKS(time_ms));
+  xQueueReceive(ledCommandQueue, &cli_message, 0);
 }
 
 
